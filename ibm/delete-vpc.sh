@@ -2,9 +2,14 @@
 
 VPC_NAME="$1"
 
+if [[ -z "${VPC_NAME}" ]]; then
+  echo "usage: delete-vpc.sh VPC_NAME" >&2
+  exit 1
+fi
+
 set -e
 
-echo "*** Deleting instances..."
+echo "*** Deleting virtual server instances..."
 echo ""
 
 ibmcloud is instances --all-resource-groups --output JSON | \
@@ -99,18 +104,23 @@ do
 
   if [[ -n "${public_gateway_id}" ]]; then
     echo "Detach public gateway from subnet: ${public_gateway_name} (${public_gateway_id})"
-    ibmcloud is subnet-public-gateway-detach -f "${id}"
+    ibmcloud is subnet-public-gateway-detach "${id}" --force
   fi
 
-  ibmcloud is subnet-reserved-ips "${id}" | \
+  ibmcloud is subnet-reserved-ips "${id}" --output json | \
     jq -c '.[]' | \
     while read reserved_ip;
   do
     ip_id=$(echo "$reserved_ip" | jq -r '.id')
     ip_name=$(echo "$reserved_ip" | jq -r '.name')
+    ip_owner=$(echo "$reserved_ip" | jq -r '.owner')
 
-    echo "Deleting reserved ip: ${ip_name} (${ip_id})"
-    ibmcloud is subnet-reserved-ip-delete -f "${id}" "${ip_id}"
+    if [[ "${ip_owner}" != "provider" ]]; then
+      echo "Deleting reserved ip: ${ip_name} (${ip_id})"
+      ibmcloud is subnet-reserved-ip-delete -f "${id}" "${ip_id}" || echo "Error deleting reserved ip"
+    else
+      echo "Skipping reserved ip owned by provider: ${ip_name} (${ip_id})"
+    fi
   done
   
   echo "Deleting subnet: ${name} (${id})"
@@ -122,7 +132,7 @@ echo "*** Deleting public gateways..."
 echo ""
 
 ibmcloud is public-gateways --all-resource-groups --output JSON | \
-  jq -c --arg VPC_NAME sms-vpn-vpc '.[] | select(.vpc.name == $VPC_NAME)' | \
+  jq -c --arg VPC_NAME "${VPC_NAME}" '.[] | select(.vpc.name == $VPC_NAME)' | \
   while read gateway;
 do
 
@@ -139,6 +149,8 @@ do
 #    ibmcloud is floating-ip-release -f "${floating_ip_id}"
 #  fi
 done
+
+sleep 10
 
 echo ""
 echo "*** Deleting VPC..."
