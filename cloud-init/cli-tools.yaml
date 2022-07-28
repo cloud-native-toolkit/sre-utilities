@@ -52,6 +52,7 @@ packages:
   - unzip
   - openvpn
   - ca-certificates
+  - graphviz
 
 runcmd:
   - mkdir -p /run/tmp
