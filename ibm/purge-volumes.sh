@@ -8,7 +8,7 @@ NAME_PATTERN="$1"
 ALL_REGIONS="$2"
 
 if [[ -z "${NAME_PATTERN}" ]]; then
-  echo "The name or regex pattern of the VPC(s) should be provided as the first argument" >&2
+  echo "The name or regex pattern of the resource groups should be provided as the first argument" >&2
   return 1
 fi
 
@@ -25,16 +25,16 @@ fi
 echo "${REGIONS}" | while read region; do
   
   if [[ "${region}" != "${CURRENT_REGION}" ]]; then
-    ibmcloud target -r "${region}" 1> /dev/null || continue
+    ibmcloud target -r "${region}" 1> /dev/null
 
-    echo "Finding VPCs in region: ${region}"
+    echo "Finding volumes in region (${region}) for resource group name pattern: ${NAME_PATTERN}"
   fi
 
-  ibmcloud is vpcs --output json 2> /dev/null | \
-    jq --arg NAME "${NAME_PATTERN}" -r '.[] | select(.name | test($NAME)) | .name' | \
-    while read vpc_name; 
+  ibmcloud is volumes --output json 2> /dev/null | \
+    jq --arg NAME "${NAME_PATTERN}" -r '.[] | select(.resource_group.name | test($NAME)) | .id' | \
+    while read volume_id; 
   do
-    delete_vpc "${vpc_name}"
+    delete_volume "${volume_id}"
   done
 done
 
