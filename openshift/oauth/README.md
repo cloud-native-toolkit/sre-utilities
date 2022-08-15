@@ -33,7 +33,7 @@ The following options are available:
 2. Install the helm chart with the following:
 
     ```shell
-    helm install {idp-provider-name} ocp-oauth-htpasswd \
+    helm install ${idp_provider_name} ocp-oauth-htpasswd \
       --repo https://charts.cloudnativetoolkit.dev \
       -n openshift-config \
       -f values.yaml
@@ -95,11 +95,11 @@ Optional values can also be provided to further configure the OAuth entry:
 Install the chart by running the following command:
 
 ```shell
-helm install {idp-provider-name} ocp-oauth-github \
+helm install ${idp_provider_name} ocp-oauth-github \
   --repo https://charts.cloudnativetoolkit.dev \
   -n openshift-config \
-  --set clientId=clientId \
-  --set clientSecret=clientSecret \
+  --set clientId=${clientId} \
+  --set clientSecret=${clientSecret} \
   --set organizations="{org1,org2}" \
   --set teams="{org1/team1,org1/team2}"
 ```
