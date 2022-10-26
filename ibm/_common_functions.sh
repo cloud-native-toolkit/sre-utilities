@@ -62,6 +62,37 @@ delete_vpc() {
 
   set -e
 
+
+  echo "*** Deleting VPN gateways..."
+  echo ""
+
+  ibmcloud is vpn-gateways --output JSON --all-resource-groups | \
+    jq -c --arg VPN_GATEWAY_NAME $VPN_GATEWAY_NAME '.[] | select(.name == $VPN_GATEWAY_NAME)' | \
+    while read instance; 
+  do
+
+    id=$(echo "$instance" | jq -r '.[].id')
+
+    if [[ -n "${id}" ]]; then
+      ibmcloud is vpn-gateway-delete $id -f
+    fi
+  done;
+
+  echo "*** Deleting VPN Servers..."
+  echo ""
+
+  ibmcloud is vpn-servers --output JSON --all-resource-groups | \
+    jq -c --arg VPN_SERVER_NAME $VPN_SERVER_NAME '.[] | select(.name == $VPN_SERVER_NAME)' | \
+    while read instance; 
+  do
+
+    id=$(echo "$instance" | jq -r '.[].id')
+    if [[ -n "${id}" ]]; then
+      ibmcloud is vpn-server-delete $id -f
+    fi
+  done;
+
+
   echo "*** Deleting virtual server instances..."
   echo ""
 
