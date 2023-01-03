@@ -27,6 +27,7 @@ for volume in $(echo "$VOLUMES" | jq -r '.[] | @base64'); do
     }
    VOLUME=$(_jq)
    NAME=$(echo $VOLUME | jq '.name' -r)
+   ID=$(echo $VOLUME | jq '.id' -r)
    STATUS=$(echo $VOLUME | jq '.status' -r)
    ATTACHMENTS=$(echo $VOLUME | jq '.volume_attachments | length')
 
@@ -36,7 +37,7 @@ for volume in $(echo "$VOLUMES" | jq -r '.[] | @base64'); do
 
         echo "Deleting volume $NAME with $ATTACHMENTS attachments...";
 
-        ibmcloud is volume-delete "$NAME" -f
+        ibmcloud is volume-delete "$ID" -f
       fi
    fi
 done
